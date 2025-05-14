@@ -2,38 +2,42 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
+    <meta-data
+        android:name="com.google.android.gms.version"
+        android:value="@integer/google_play_services_version" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/logo3"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/logo3"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApp"
         tools:targetApi="31">
         <activity
-            android:name=".book_appointements"
+            android:name=".MedicationReminder"
             android:exported="false" />
         <activity
-            android:name=".google_sign_in"
-            android:exported="false" />
-
-        <activity
-            android:name=".splash_screen"
-            android:exported="false"
-            android:theme="@style/Theme.MyApp"/>
-        <activity
-            android:name=".med_info"
+            android:name=".AddMedications"
             android:exported="false" />
         <activity
-            android:name=".add_medication"
+            android:name=".HomePageRendezvous"
             android:exported="false" />
         <activity
-            android:name=".sign_in"
+            android:name=".Home"
+            android:exported="true" />
+        <activity
+            android:name=".BookAppointements"
+            android:exported="true" />
+        <activity
+            android:name=".SplashScreen"
             android:exported="true"
             android:theme="@style/Theme.MyApp">
             <intent-filter>
@@ -42,7 +46,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".HomePageMedication"
+            android:exported="true" />
+        <activity
+            android:name=".SignIn"
+            android:exported="true"
+            android:theme="@style/Theme.MyApp" />
     </application>
 
 </manifest>

@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Google SignIn</string>
+    <string name="app_name">MediTrack</string>
 
     <string name="web_client_id">69943213121-4oe6cf13sl8ctovs6as7o0knddcu2ftl.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">VOTRE_CLIENT_ID_WEB.apps.googleusercontent.com</string>
 
 </resources>

@@ -1,16 +1,13 @@
-package com.example.myapp
+package com.example.googlesignin
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import android.content.Intent
-import android.view.View
 import android.widget.*
-import java.util.*
 import kotlin.jvm.java
-import kotlin.math.sign
 
 
-class splash_screen : ComponentActivity() {
+class SplashScreen : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,7 +15,7 @@ class splash_screen : ComponentActivity() {
 
         val btnConnect = findViewById<Button>(R.id.btn_connect)
         btnConnect.setOnClickListener {
-            val intent = Intent(this, sign_in::class.java)
+            val intent = Intent(this, SignIn::class.java)
             startActivity(intent)
 
         }

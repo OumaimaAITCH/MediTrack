@@ -1,55 +1,62 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FDFDFD"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:fitsSystemWindows="true"
+    tools:context=".SignIn">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/meditrack_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/green_text"
+        android:elevation="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="MEDITRACK"
+        app:titleCentered="true"
+        app:titleTextColor="@color/white" />
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="401dp"
-        android:layout_height="446dp"
+        android:layout_width="363dp"
+        android:layout_height="379dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="10dp"
         android:src="@drawable/logo3"
+        app:layout_constraintDimensionRatio="H,1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/meditrack_toolbar"
+        app:layout_constraintWidth_percent="0.7" />
 
     <TextView
         android:id="@+id/textView1"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="32dp"
         android:text="Connectez-vous pour accéder plus facilement à votre suivi"
         android:textAlignment="center"
         android:textColor="#1B5F9E"
-        android:textSize="30sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView" />
-
-
-    <TextView
-        android:id="@+id/textViewSignIn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Se connecter avec Google"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/signInButton"
-        tools:ignore="DuplicateIds" />
+        app:layout_constraintTop_toBottomOf="@id/imageView" />
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/signInButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="593dp"
-        tools:ignore="MissingConstraints" />
-
+        app:layout_constraintTop_toBottomOf="@id/textView1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

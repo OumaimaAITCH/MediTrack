@@ -1,4 +1,4 @@
-package com.example.myapp
+package com.example.googlesignin
 
 import android.app.Activity
 import android.content.Intent
@@ -20,6 +20,7 @@ class GoogleSignInManager private constructor() {
 
     val GOOGLE_SIGN_IN = 100
     private var firebaseAuth: FirebaseAuth? = null
+
 
     private fun init(context: Context) {
         this.context = context
@@ -85,7 +86,7 @@ class GoogleSignInManager private constructor() {
             .addOnCompleteListener(activity!!) { task ->
                 if (task.isSuccessful) {
                     Log.d("TAG", "Connexion réussie")
-                    val intent = Intent(context, home::class.java)
+                    val intent = Intent(context, Home::class.java)
                     context?.startActivity(intent)
                     activity?.finish()
                 } else {

@@ -7,5 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="green_text">#7FCA2B</color>
+    <color name="green_text">#80CC2B</color>
+    <color name="meditrackGreen">#8CC63F</color>
+    <color name="meditrackBlue">#335CAD</color>
+    <color name="blue">#196EB0</color>
 </resources>

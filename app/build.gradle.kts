@@ -3,14 +3,17 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
+    id ("kotlin-android")
+    id ("com.google.gms.google-services")
+
 }
 
 android {
-    namespace = "com.example.myapp"
+    namespace = "com.example.googlesignin"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapp"
+        applicationId = "com.example.googlesignin"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -72,6 +75,18 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
 
 
+    // Firebase & Auth
+    implementation ("com.google.firebase:firebase-auth-ktx:21.3.0")
+    // Google Sign-In
+    implementation ("com.google.android.gms:play-services-auth:20.5.0")
+    // Material components
+    implementation ("com.google.android.material:material:1.9.0")
+
+//    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation ("com.google.firebase:firebase-auth")
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+
+    implementation ("com.google.firebase:firebase-firestore-ktx:24.5.0")
 
 
 }
