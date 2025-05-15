@@ -1,40 +1,82 @@
 package com.example.googlesignin
 
-import android.annotation.SuppressLint
-import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import com.google.firebase.firestore.FirebaseFirestore
 
-class TakeMedicationReceiver {
+/**
+ * Récepteur pour gérer l'action "Pris" depuis la notification
+ */
+class TakeMedicationReceiver : BroadcastReceiver() {
     private val TAG = "TakeMedicationReceiver"
 
-    fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == "ACTION_TAKE_MEDICATION") {
-            val medicationId = intent.getStringExtra("medication_id")
-            if (medicationId != null) {
-                markMedicationAsTaken(context, medicationId)
-            }
+    override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "TakeMedicationReceiver onReceive")
+
+        // Extraire l'ID du médicament de l'intent
+        val medicationId = intent.getStringExtra("medication_id")
+        val stopRingtone = intent.getBooleanExtra("stop_ringtone", false)
+
+        if (medicationId == null) {
+            Log.e(TAG, "Pas d'ID de médicament fourni")
+            return
         }
-    }
 
-    @SuppressLint("ServiceCast")
-    private fun markMedicationAsTaken(context: Context, medicationId: String) {
+        // Arrêter la sonnerie si demandé
+        if (stopRingtone) {
+            AlarmReceiver.stopRingtone()
+        }
+
+        // Fermer la notification
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        notificationManager.cancel(medicationId.hashCode())
+
+        // Récupérer les informations du médicament depuis Firestore
         val db = FirebaseFirestore.getInstance()
+        db.collection("medications")
+            .document(medicationId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val totalDays = document.getLong("duree")?.toInt() ?: 0
 
-        db.collection("medications").document(medicationId)
-            .update("isTaken", true)
-            .addOnSuccessListener {
-                Log.d(TAG, "Médicament marqué comme pris")
+                    // Annuler toutes les alarmes futures
+                    AlarmReceiver.cancelFutureAlarms(context, medicationId, totalDays)
 
-                // Fermer la notification
-                val notificationManager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.cancel(medicationId.hashCode())
+                    // Marquer le médicament comme pris
+                    db.collection("medications")
+                        .document(medicationId)
+                        .update(
+                            mapOf(
+                                "isTaken" to true,
+                                "alarmEnabled" to false
+                            )
+                        )
+                        .addOnSuccessListener {
+                            Log.d(TAG, "Médicament marqué comme pris avec succès")
+                            Toast.makeText(context, "Médicament marqué comme pris", Toast.LENGTH_SHORT).show()
+
+                            // Ouvrir l'écran d'accueil
+                            val homeIntent = Intent(context, HomePageMedication::class.java).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            }
+                            context.startActivity(homeIntent)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Erreur lors de la mise à jour du statut du médicament: ${e.message}")
+                            Toast.makeText(context, "Erreur lors de la mise à jour: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Log.e(TAG, "Document du médicament non trouvé")
+                    Toast.makeText(context, "Médicament non trouvé", Toast.LENGTH_SHORT).show()
+                }
             }
             .addOnFailureListener { e ->
-                Log.e(TAG, "Erreur lors de la mise à jour du statut du médicament: ${e.message}")
+                Log.e(TAG, "Erreur lors de la récupération du médicament: ${e.message}")
+                Toast.makeText(context, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 }

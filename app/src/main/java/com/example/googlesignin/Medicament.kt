@@ -9,6 +9,7 @@ data class Medicament(
     val alarmeActive: Boolean = false,
     val quantity: String = "",
     val rappel: String = "",
-    var isTaken: Boolean = false
+    var isTaken: Boolean = false,
+    val duree: Int = 0
 )
 

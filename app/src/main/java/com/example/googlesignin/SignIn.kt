@@ -13,10 +13,14 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import java.util.Date
 
 class SignIn : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var googleClient: GoogleSignInClient
+    private lateinit var db: FirebaseFirestore
     private val RC_SIGN_IN = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +30,7 @@ class SignIn : AppCompatActivity() {
         // Initialiser Firebase
         FirebaseApp.initializeApp(this)
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
         // Configurer Google Sign-In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -62,10 +67,54 @@ class SignIn : AppCompatActivity() {
         auth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Redirection vers l'activité google_sign_in
-                    val intent = Intent(this, Home::class.java)
-                    startActivity(intent)
-                    finish()
+                    // Récupérer l'utilisateur Firebase
+                    val user = auth.currentUser
+
+                    // Vérifier si l'utilisateur existe
+                    if (user != null) {
+                        // Créer un objet Map avec les données de l'utilisateur
+                        val userData = hashMapOf(
+                            "email" to user.email,
+                            "nom" to user.displayName,
+                            "photoURL" to (user.photoUrl?.toString() ?: ""),
+                            "lastLogin" to Date(),
+                            "phoneNumber" to (user.phoneNumber ?: "")
+                        )
+
+                        // Référence au document utilisateur dans Firestore
+                        val userRef = db.collection("users").document(user.uid)
+
+                        // Vérifier si l'utilisateur existe déjà dans Firestore
+                        userRef.get()
+                            .addOnSuccessListener { document ->
+                                if (document.exists()) {
+                                    // L'utilisateur existe, mettre à jour la dernière connexion
+                                    userRef.set(
+                                        hashMapOf("lastLogin" to Date()),
+                                        SetOptions.merge()
+                                    )
+                                    Toast.makeText(this, "Connexion réussie", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    // Créer un nouveau document utilisateur
+                                    userData["createdAt"] = Date()
+                                    userRef.set(userData)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(this, "Nouvel utilisateur enregistré", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(this, "Erreur d'enregistrement: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+
+                                // Redirection vers l'activité principale
+                                val intent = Intent(this, Home::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(this, "Erreur Firestore: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                    }
                 } else {
                     Toast.makeText(this, "Erreur d'authentification Firebase.", Toast.LENGTH_SHORT).show()
                 }

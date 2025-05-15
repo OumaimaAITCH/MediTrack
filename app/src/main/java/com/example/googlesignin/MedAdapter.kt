@@ -35,26 +35,14 @@ class MedAdapter(
     override fun onBindViewHolder(holder: MedAdapter.ViewHolder, position: Int) {
         val m = items[position]
         holder.tvNom.text = m.nom
-
+        holder.tvInfos.text = "${m.dose} ${m.type} • ${m.quantity} unités"
         // Formatage du rappel dans le style souhaité
         val rappelParts = m.rappel.split(", ") // Sépare "21/04/2024, 21:41"
         if (rappelParts.size == 2) {
-            val dateParts = rappelParts[0].split("/") // Sépare "21/04/2024"
             val time = rappelParts[1] // "21:41"
 
-            // Convertir en Calendar pour obtenir le jour de la semaine
-            val calendar = Calendar.getInstance().apply {
-                set(Calendar.DAY_OF_MONTH, dateParts[0].toInt())
-                set(Calendar.MONTH, dateParts[1].toInt() - 1)
-                set(Calendar.YEAR, dateParts[2].toInt())
-            }
-
-            // Obtenir le jour en français
-            val joursSemaine = arrayOf("dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi")
-            val jour = joursSemaine[calendar.get(Calendar.DAY_OF_WEEK) - 1]
-
             // Formater l'affichage
-            holder.tvRappel.text = "Prévu pour ${time}, ${jour}"
+            holder.tvRappel.text = "${time}"
         } else {
             holder.tvRappel.text = m.rappel
         }
@@ -112,6 +100,16 @@ class MedAdapter(
         items.clear()
         items.addAll(newItems)
         notifyDataSetChanged()
+    }
+
+
+    // Ajouter cette méthode pour mettre à jour un item spécifique
+    fun updateItem(medicament: Medicament) {
+        val position = items.indexOfFirst { it.id == medicament.id }
+        if (position != -1) {
+            items[position] = medicament
+            notifyItemChanged(position)
+        }
     }
 
 //    fun add(m: Medicament) {

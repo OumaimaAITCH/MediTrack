@@ -1,17 +1,18 @@
 package com.example.googlesignin
 
+
 import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.SimpleAdapter
 import android.widget.Spinner
 import android.widget.Switch
 import android.widget.Toast
@@ -19,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Calendar
+import com.google.firebase.auth.FirebaseAuth
 
 class AddMedications : AppCompatActivity() {
     private lateinit var meditrackToolbar: Toolbar
@@ -32,10 +34,17 @@ class AddMedications : AppCompatActivity() {
     private lateinit var alarmSwitch: Switch
     private var alarmScheduled = false
     private var alarmTimeInMillis: Long = 0
+    private lateinit var dureeInput: EditText
+
+    // Variables for edit mode
+    private var isEditMode = false
+    private var medicationId = ""
+    private var originalAlarmEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_medications)
+        dureeInput = findViewById(R.id.duree_input)
 
         initializeViews()
         setupToolbar()
@@ -44,6 +53,69 @@ class AddMedications : AppCompatActivity() {
         setupBackIcon()
         setupAlarmSwitch()
         setupSaveButton()
+
+        // Check if we're in edit mode
+        checkForEditMode()
+    }
+
+    private fun checkForEditMode() {
+        val extras = intent.extras
+        if (extras != null && extras.containsKey("MEDICATION_ID")) {
+            isEditMode = true
+            medicationId = extras.getString("MEDICATION_ID", "")
+
+            // Update toolbar title
+            meditrackToolbar.title = "Modifier le médicament"
+
+            // Load medication data
+            loadMedicationData(medicationId)
+
+            // Update button text
+            saveButton.text = "Mettre à jour"
+        }
+    }
+
+    private fun loadMedicationData(id: String) {
+        if (id.isEmpty()) return
+
+        FirebaseFirestore.getInstance()
+            .collection("medications")
+            .document(id)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    // Fill form with existing data
+                    nameInput.setText(document.getString("name") ?: "")
+                    doseInput.setText(document.getString("dose") ?: "")
+                    quantityInput.setText(document.getString("quantity") ?: "")
+                    reminderInput.setText(document.getString("reminder") ?: "")
+                    dureeInput.setText((document.getLong("duree") ?: 0).toString())
+
+                    // Set alarm switch
+                    val alarmEnabled = document.getBoolean("alarmEnabled") ?: false
+                    originalAlarmEnabled = alarmEnabled
+                    alarmSwitch.isChecked = alarmEnabled
+                    alarmSwitch.isEnabled = !reminderInput.text.toString().isEmpty()
+
+                    // Set spinner selection
+                    val medicationType = document.getString("type") ?: ""
+                    setSpinnerSelection(medicationType)
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Erreur lors du chargement des données: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun setSpinnerSelection(type: String) {
+        val adapter = typeSpinner.adapter as SimpleAdapter
+        for (i in 0 until adapter.count) {
+            val item = adapter.getItem(i) as Map<*, *>
+            if (item["text"] == type) {
+                typeSpinner.setSelection(i)
+                break
+            }
+        }
     }
 
     private fun initializeViews() {
@@ -65,9 +137,22 @@ class AddMedications : AppCompatActivity() {
     }
 
     private fun setupSpinner() {
-        val types = arrayOf("Sélectionnez une option", "Capsule", "Goutte", "Comprimé")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, types)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val itemList = listOf(
+            mapOf("text" to "Sélectionnez une option", "image" to null),
+            mapOf("text" to "Capsule", "image" to R.drawable.capsule),
+            mapOf("text" to "Goutte", "image" to R.drawable.goutte),
+            mapOf("text" to "Comprimé", "image" to R.drawable.comprimes)
+        )
+
+        val adapter = SimpleAdapter(
+            this,
+            itemList,
+            R.layout.spinner_item,
+            arrayOf("text", "image"),
+            intArrayOf(R.id.text, R.id.icon)
+        )
+
+        adapter.setDropDownViewResource(R.layout.spinner_item)
         typeSpinner.adapter = adapter
     }
 
@@ -78,14 +163,12 @@ class AddMedications : AppCompatActivity() {
     }
 
     private fun setupAlarmSwitch() {
-        // Désactiver le switch si aucun rappel n'est défini
         reminderInput.setOnFocusChangeListener { _, hasFocus ->
             if (!hasFocus) {
                 updateAlarmSwitchState()
             }
         }
 
-        // Gérer les changements d'état du switch
         alarmSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 val reminder = reminderInput.text.toString()
@@ -94,10 +177,8 @@ class AddMedications : AppCompatActivity() {
                     alarmSwitch.isChecked = false
                     return@setOnCheckedChangeListener
                 }
-                // Afficher un message confirmant l'activation de l'alarme
                 Toast.makeText(this, "Alarme activée", Toast.LENGTH_SHORT).show()
             } else {
-                // Afficher un message confirmant la désactivation de l'alarme
                 Toast.makeText(this, "Alarme désactivée", Toast.LENGTH_SHORT).show()
             }
         }
@@ -132,7 +213,6 @@ class AddMedications : AppCompatActivity() {
                     set(Calendar.SECOND, 0)
                 }
 
-                // Vérifier si la date est dans le futur
                 if (selectedCalendar.timeInMillis <= System.currentTimeMillis()) {
                     Toast.makeText(this, "Veuillez sélectionner une date future", Toast.LENGTH_SHORT).show()
                     return@TimePickerDialog
@@ -154,134 +234,192 @@ class AddMedications : AppCompatActivity() {
 
     private fun setupBackIcon() {
         backIcon.setOnClickListener {
-            finish() // Ferme l'activité et retourne à l'écran précédent
+            finish()
         }
     }
 
     private fun setupSaveButton() {
         saveButton.setOnClickListener {
             val name = nameInput.text.toString()
-            val type = typeSpinner.selectedItem.toString()
+            val spinnerItem = typeSpinner.selectedItem as? Map<*, *>
+            val type = spinnerItem?.get("text")?.toString() ?: "Sélectionnez une option"
             val dose = doseInput.text.toString()
             val quantity = quantityInput.text.toString()
             val reminder = reminderInput.text.toString()
             val alarmeActive = alarmSwitch.isChecked
+            val duree = dureeInput.text.toString().toIntOrNull() ?: 0
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+            if (currentUserId == null) {
+                Toast.makeText(this, "Veuillez vous connecter", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            // Validation des champs obligatoires
+            val medicationData = hashMapOf(
+                "name" to name,
+                "type" to type,
+                "dose" to dose,
+                "quantity" to quantity,
+                "reminder" to reminder,
+                "alarmEnabled" to alarmeActive,
+                "isTaken" to false,
+                "duree" to duree,
+                "userId" to currentUserId  // Ajout de l'ID utilisateur
+            )
+
+
             if (name.isEmpty() || type == "Sélectionnez une option" || dose.isEmpty() || quantity.isEmpty()) {
                 Toast.makeText(this, "Veuillez remplir tous les champs obligatoires (*)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Vérifier si l'alarme est activée mais le rappel n'est pas défini
             if (alarmeActive && reminder.isEmpty()) {
                 Toast.makeText(this, "Veuillez définir un rappel pour activer l'alarme", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Création de l'objet Medicament
-            val medicament = Medicament(
-                nom = name,
-                type = type,
-                dose = dose,
-                quantity = quantity,
-                rappel = reminder,
-                alarmeActive = alarmeActive
-            )
 
-            // Sauvegarde dans Firestore
-            val medicationData = hashMapOf(
-                "name" to medicament.nom,
-                "type" to medicament.type,
-                "dose" to medicament.dose,
-                "quantity" to medicament.quantity,
-                "reminder" to medicament.rappel,
-                "alarmEnabled" to medicament.alarmeActive,
-                "isTaken" to medicament.isTaken
-            )
 
-            FirebaseFirestore.getInstance()
-                .collection("medications")
-                .add(medicationData)
-                .addOnSuccessListener { docRef ->
-                    // Si l'alarme est activée, programmer l'alarme
-                    if (alarmeActive && reminder.isNotEmpty()) {
-                        scheduleAlarm(reminder, name, docRef.id)
+            val db = FirebaseFirestore.getInstance()
+
+            if (isEditMode) {
+                // Update existing medication
+                db.collection("medications")
+                    .document(medicationId)
+                    .update(medicationData as Map<String, Any>)
+                    .addOnSuccessListener {
+                        // Cancel existing alarm if it was enabled and now disabled or reminder changed
+                        if (originalAlarmEnabled && (!alarmeActive || originalAlarmEnabled != alarmeActive)) {
+                            cancelAlarm(medicationId)
+                        }
+
+                        // Schedule new alarm if enabled
+                        if (alarmeActive && reminder.isNotEmpty()) {
+                            scheduleAlarm(reminder, name, medicationId)
+                        }
+
+                        Toast.makeText(this, "Médicament mis à jour avec succès", Toast.LENGTH_SHORT).show()
+                        finish()
                     }
-                    Toast.makeText(this, "Médicament ajouté avec succès", Toast.LENGTH_SHORT).show()
-                    finish()
-                }
-                .addOnFailureListener { e ->
-                    Toast.makeText(this, "Erreur : ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "Erreur lors de la mise à jour : ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            } else {
+                // Add new medication
+                db.collection("medications")
+                    .add(medicationData)
+                    .addOnSuccessListener { docRef ->
+                        if (alarmeActive && reminder.isNotEmpty()) {
+                            scheduleAlarm(reminder, name, docRef.id)
+                        }
+                        Toast.makeText(this, "Médicament ajouté avec succès", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "Erreur : ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
 
     private fun scheduleAlarm(reminder: String, medicationName: String, medicationId: String) {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, AlarmReceiver::class.java).apply {
-            putExtra("medication_name", medicationName)
-            putExtra("medication_id", medicationId)
-        }
-
-        // Utiliser l'ID du médicament comme code de requête pour éviter les écrasements
-        val pendingIntentId = medicationId.hashCode()
-
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            pendingIntentId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         try {
-            if (alarmTimeInMillis > 0) {
-                // Utiliser le timestamp stocké lors de la sélection de date/heure
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarmTimeInMillis, pendingIntent)
-                alarmScheduled = true
-                Toast.makeText(this, "Alarme programmée pour $reminder", Toast.LENGTH_SHORT).show()
-            } else {
-                // Méthode alternative si alarmTimeInMillis n'est pas défini
-                val dateTimeParts = reminder.split(", ")
-                val dateParts = dateTimeParts[0].split("/")
-                val timeParts = dateTimeParts[1].split(":")
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val duree = dureeInput.text.toString().toIntOrNull() ?: 0
 
-                val calendar = Calendar.getInstance().apply {
-                    set(Calendar.DAY_OF_MONTH, dateParts[0].toInt())
-                    set(Calendar.MONTH, dateParts[1].toInt() - 1)
-                    set(Calendar.YEAR, dateParts[2].toInt())
-                    set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
-                    set(Calendar.MINUTE, timeParts[1].toInt())
-                    set(Calendar.SECOND, 0)
+            // First cancel any existing alarms for this medication
+            cancelAlarm(medicationId)
+
+            val reminderParts = reminder.split(", ")
+            if (reminderParts.size == 2) {
+                val dateParts = reminderParts[0].split("/")
+                val timeParts = reminderParts[1].split(":")
+
+                // Créer les alarmes pour chaque jour de la durée
+                for (day in 0 until duree) {
+                    val calendar = Calendar.getInstance().apply {
+                        set(Calendar.DAY_OF_MONTH, dateParts[0].toInt())
+                        set(Calendar.MONTH, dateParts[1].toInt() - 1)
+                        set(Calendar.YEAR, dateParts[2].toInt())
+                        set(Calendar.HOUR_OF_DAY, timeParts[0].toInt())
+                        set(Calendar.MINUTE, timeParts[1].toInt())
+                        set(Calendar.SECOND, 0)
+                        add(Calendar.DAY_OF_MONTH, day)  // Ajouter les jours
+                    }
+
+                    val intent = Intent(this, AlarmReceiver::class.java).apply {
+                        putExtra("medication_name", medicationName)
+                        putExtra("medication_id", medicationId)
+                        putExtra("day_number", day + 1)
+                        putExtra("total_days", duree)
+                    }
+
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        this,
+                        "${medicationId}_${day}".hashCode(),
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (alarmManager.canScheduleExactAlarms()) {
+                            alarmManager.setAlarmClock(
+                                AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+                                pendingIntent
+                            )
+                        }
+                    } else {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            pendingIntent
+                        )
+                    }
                 }
-
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-                alarmScheduled = true
-                Toast.makeText(this, "Alarme programmée pour $reminder", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Alarmes programmées pour $duree jours", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
-            alarmScheduled = false
-            Toast.makeText(this, "Erreur lors de la programmation de l'alarme : ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Méthode pour annuler une alarme existante
     private fun cancelAlarm(medicationId: String) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, AlarmReceiver::class.java)
-        val pendingIntentId = medicationId.hashCode()
+        val duree = dureeInput.text.toString().toIntOrNull() ?: 0
 
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            pendingIntentId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        // Cancel all alarms for this medication (for each day)
+        for (day in 0 until duree) {
+            val intent = Intent(this, AlarmReceiver::class.java)
+            val pendingIntentId = "${medicationId}_${day}".hashCode()
+            val pendingIntent = PendingIntent.getBroadcast(
+                this,
+                pendingIntentId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        // Annuler l'alarme
-        alarmManager.cancel(pendingIntent)
-        pendingIntent.cancel()
+            try {
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+            } catch (e: Exception) {
+                // Just skip if there's an error with a particular alarm
+            }
+        }
+
+        // Also try to cancel using the original format (for backward compatibility)
+        try {
+            val intent = Intent(this, AlarmReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                this,
+                medicationId.hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+        } catch (e: Exception) {
+            // Just skip if there's an error
+        }
+
         alarmScheduled = false
-        Toast.makeText(this, "Alarme annulée", Toast.LENGTH_SHORT).show()
     }
 }
