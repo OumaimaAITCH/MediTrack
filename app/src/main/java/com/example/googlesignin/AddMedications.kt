@@ -35,8 +35,6 @@ class AddMedications : AppCompatActivity() {
     private var alarmScheduled = false
     private var alarmTimeInMillis: Long = 0
     private lateinit var dureeInput: EditText
-
-    // Variables for edit mode
     private var isEditMode = false
     private var medicationId = ""
     private var originalAlarmEnabled = false
@@ -54,7 +52,6 @@ class AddMedications : AppCompatActivity() {
         setupAlarmSwitch()
         setupSaveButton()
 
-        // Check if we're in edit mode
         checkForEditMode()
     }
 
@@ -64,13 +61,10 @@ class AddMedications : AppCompatActivity() {
             isEditMode = true
             medicationId = extras.getString("MEDICATION_ID", "")
 
-            // Update toolbar title
             meditrackToolbar.title = "Modifier le médicament"
 
-            // Load medication data
             loadMedicationData(medicationId)
 
-            // Update button text
             saveButton.text = "Mettre à jour"
         }
     }
@@ -84,20 +78,18 @@ class AddMedications : AppCompatActivity() {
             .get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
-                    // Fill form with existing data
+
                     nameInput.setText(document.getString("name") ?: "")
                     doseInput.setText(document.getString("dose") ?: "")
                     quantityInput.setText(document.getString("quantity") ?: "")
                     reminderInput.setText(document.getString("reminder") ?: "")
                     dureeInput.setText((document.getLong("duree") ?: 0).toString())
 
-                    // Set alarm switch
                     val alarmEnabled = document.getBoolean("alarmEnabled") ?: false
                     originalAlarmEnabled = alarmEnabled
                     alarmSwitch.isChecked = alarmEnabled
                     alarmSwitch.isEnabled = !reminderInput.text.toString().isEmpty()
 
-                    // Set spinner selection
                     val medicationType = document.getString("type") ?: ""
                     setSpinnerSelection(medicationType)
                 }
@@ -263,7 +255,7 @@ class AddMedications : AppCompatActivity() {
                 "alarmEnabled" to alarmeActive,
                 "isTaken" to false,
                 "duree" to duree,
-                "userId" to currentUserId  // Ajout de l'ID utilisateur
+                "userId" to currentUserId
             )
 
 
@@ -282,7 +274,6 @@ class AddMedications : AppCompatActivity() {
             val db = FirebaseFirestore.getInstance()
 
             if (isEditMode) {
-                // Update existing medication
                 db.collection("medications")
                     .document(medicationId)
                     .update(medicationData as Map<String, Any>)
@@ -292,7 +283,6 @@ class AddMedications : AppCompatActivity() {
                             cancelAlarm(medicationId)
                         }
 
-                        // Schedule new alarm if enabled
                         if (alarmeActive && reminder.isNotEmpty()) {
                             scheduleAlarm(reminder, name, medicationId)
                         }
@@ -304,7 +294,6 @@ class AddMedications : AppCompatActivity() {
                         Toast.makeText(this, "Erreur lors de la mise à jour : ${e.message}", Toast.LENGTH_SHORT).show()
                     }
             } else {
-                // Add new medication
                 db.collection("medications")
                     .add(medicationData)
                     .addOnSuccessListener { docRef ->
@@ -326,7 +315,6 @@ class AddMedications : AppCompatActivity() {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val duree = dureeInput.text.toString().toIntOrNull() ?: 0
 
-            // First cancel any existing alarms for this medication
             cancelAlarm(medicationId)
 
             val reminderParts = reminder.split(", ")
@@ -334,7 +322,6 @@ class AddMedications : AppCompatActivity() {
                 val dateParts = reminderParts[0].split("/")
                 val timeParts = reminderParts[1].split(":")
 
-                // Créer les alarmes pour chaque jour de la durée
                 for (day in 0 until duree) {
                     val calendar = Calendar.getInstance().apply {
                         set(Calendar.DAY_OF_MONTH, dateParts[0].toInt())
@@ -386,7 +373,6 @@ class AddMedications : AppCompatActivity() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val duree = dureeInput.text.toString().toIntOrNull() ?: 0
 
-        // Cancel all alarms for this medication (for each day)
         for (day in 0 until duree) {
             val intent = Intent(this, AlarmReceiver::class.java)
             val pendingIntentId = "${medicationId}_${day}".hashCode()
@@ -401,11 +387,9 @@ class AddMedications : AppCompatActivity() {
                 alarmManager.cancel(pendingIntent)
                 pendingIntent.cancel()
             } catch (e: Exception) {
-                // Just skip if there's an error with a particular alarm
             }
         }
 
-        // Also try to cancel using the original format (for backward compatibility)
         try {
             val intent = Intent(this, AlarmReceiver::class.java)
             val pendingIntent = PendingIntent.getBroadcast(
@@ -417,7 +401,6 @@ class AddMedications : AppCompatActivity() {
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
         } catch (e: Exception) {
-            // Just skip if there's an error
         }
 
         alarmScheduled = false

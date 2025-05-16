@@ -14,7 +14,6 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.or
 
 
 class AlarmReceiver: BroadcastReceiver() {

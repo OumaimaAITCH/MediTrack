@@ -7,9 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.firestore.FirebaseFirestore
 
-/**
- * Récepteur pour gérer l'action "Pris" depuis la notification
- */
+
 class TakeMedicationReceiver : BroadcastReceiver() {
     private val TAG = "TakeMedicationReceiver"
 

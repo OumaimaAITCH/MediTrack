@@ -1,11 +1,15 @@
 package com.example.googlesignin
 
+import android.annotation.SuppressLint
+import android.app.NotificationManager
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+
 
 class RendezvousAdapter(
     private var rendezvousList: List<Rendezvous>,
@@ -32,6 +36,7 @@ class RendezvousAdapter(
 
     }
 
+    @SuppressLint("ServiceCast")
     override fun onBindViewHolder(
         holder: ViewHolder,
         position: Int
@@ -46,6 +51,16 @@ class RendezvousAdapter(
                 if (holder.isChecked) R.drawable.checkgreen
                 else R.drawable.attention
             )
+
+            if (holder.isChecked) {
+                // Arrêter la sonnerie
+                AppointmentAlarmReceiver.stopRingtone()
+
+                // Annuler la notification
+                val notificationManager = holder.itemView.context
+                    .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.cancel(rendezvous.id.hashCode())
+            }
         }
         holder.ivDelete.setOnClickListener {
             onDeleteClick(rendezvous)

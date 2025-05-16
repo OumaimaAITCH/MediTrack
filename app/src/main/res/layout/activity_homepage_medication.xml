@@ -21,30 +21,40 @@
         app:titleCentered="true"
         app:titleTextColor="@color/white" />
 
-    <!--    <ImageButton-->
-    <!--        android:id="@+id/btnNotifications"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:background="?attr/selectableItemBackgroundBorderless"-->
-    <!--        android:contentDescription="Notifications"-->
-    <!--        android:src="@drawable/baseline_notifications_24"-->
-    <!--        app:layout_constraintBottom_toTopOf="@+id/rvMedicaments"-->
-    <!--        app:layout_constraintTop_toBottomOf="@+id/meditrack_toolbar"-->
-    <!--        app:tint="@android:color/white"-->
-    <!--        tools:layout_editor_absoluteX="395dp" />-->
+    <ImageButton
+        android:id="@+id/ibtnRetour"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="16dp"
+        android:background="@null"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/meditrack_toolbar"
+        app:srcCompat="@drawable/arrow" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Prises des médicaments"
+        app:layout_constraintBottom_toBottomOf="@+id/ibtnRetour"
+        app:layout_constraintStart_toEndOf="@+id/ibtnRetour"
+        app:layout_constraintTop_toTopOf="@+id/ibtnRetour" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMedicaments"
-        android:layout_width="373dp"
-        android:layout_height="555dp"
+        android:layout_width="377dp"
+        android:layout_height="466dp"
         android:layout_margin="16dp"
+        android:layout_marginBottom="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/fabAdd"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/meditrack_toolbar"
-        app:layout_constraintVertical_bias="0.078" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
@@ -56,5 +66,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tint="@android:color/white" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

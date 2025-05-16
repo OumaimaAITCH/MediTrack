@@ -49,23 +49,6 @@ class GoogleSignInManager private constructor() {
         }
     }
 
-    val isUserSignedIn: Boolean
-        get() {
-            val currentUser = firebaseAuth!!.currentUser
-            return currentUser != null
-        }
-
-    fun signIn() {
-        val signInIntent = mGoogleSignInClient!!.signInIntent
-        activity!!.startActivityForResult(signInIntent, GOOGLE_SIGN_IN)
-    }
-
-    fun signOut() {
-        FirebaseAuth.getInstance().signOut()
-        mGoogleSignInClient!!.signOut()
-        Toast.makeText(context, "Déconnexion réussie", Toast.LENGTH_SHORT).show()
-    }
-
     val profileInfo: FirebaseUser?
         get() = FirebaseAuth.getInstance().currentUser
 

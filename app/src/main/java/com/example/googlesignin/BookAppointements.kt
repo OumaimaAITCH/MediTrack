@@ -1,8 +1,12 @@
 package com.example.googlesignin
 
+import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.app.PendingIntent
 import android.app.TimePickerDialog
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -71,6 +75,7 @@ class BookAppointements : AppCompatActivity() {
         }
     }
 
+
     private fun saveRendezVous() {
         val objet = tvNomRendezvous.text.toString()
         val dateHeure = edDateTime.text.toString()
@@ -88,7 +93,14 @@ class BookAppointements : AppCompatActivity() {
 
         db.collection("rendezvous")
             .add(rendezvous)
-            .addOnSuccessListener {
+            .addOnSuccessListener { documentReference ->
+                // Programmer l'alarme
+                scheduleAppointmentReminder(
+                    documentReference.id,
+                    objet,
+                    dateHeure,
+                    calendar.timeInMillis
+                )
                 Toast.makeText(this, "Rendez-vous enregistré", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, HomePageRendezvous::class.java))
                 finish()
@@ -96,6 +108,41 @@ class BookAppointements : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun scheduleAppointmentReminder(appointmentId: String, title: String, time: String, timestamp: Long) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AppointmentAlarmReceiver::class.java).apply {
+            putExtra("appointment_id", appointmentId)
+            putExtra("appointment_title", title)
+            putExtra("appointment_time", time)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            appointmentId.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Programmer l'alarme 2 heures avant le rendez-vous
+        val reminderTime = timestamp - (2 * 60 * 60 * 1000) // 2 heures en millisecondes
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime,
+                    pendingIntent
+                )
+            }
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                reminderTime,
+                pendingIntent
+            )
+        }
     }
 
     private fun showDateTimePicker() {
@@ -136,7 +183,7 @@ class BookAppointements : AppCompatActivity() {
             .setMessage(message)
             .setPositiveButton("Oui") { _, _ ->
                 if (isConfirm) {
-                    // Code to confirm the appointment sauvegarder dans database
+                    // to confirm the appointment sauvegarder dans database
                     saveRendezVous()
                 }
                 finish()

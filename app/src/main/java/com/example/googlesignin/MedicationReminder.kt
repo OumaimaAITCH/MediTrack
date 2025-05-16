@@ -13,7 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.firebase.firestore.FirebaseFirestore
-import java.text.SimpleDateFormat
 import java.util.Calendar
 import android.app.NotificationManager
 import android.content.Context
@@ -102,7 +101,7 @@ class MedicationReminder : AppCompatActivity() {
         deleteIconImageView = findViewById(R.id.ivdelete)
 
         try {
-            editIconImageView = findViewById(R.id.info_icon) // Corrigé : utiliser edit_icon
+            editIconImageView = findViewById(R.id.info_icon)
             editIconImageView.setOnClickListener { editMedication() }
         } catch (e: Exception) {
             Log.e("MedicationReminder", "Edit icon not found in layout: ${e.message}")

@@ -13,9 +13,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
-/**
- * Classe utilitaire pour gérer les opérations liées aux utilisateurs dans Firestore
- */
+
 class UserManager {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
@@ -45,16 +43,11 @@ class UserManager {
         return userRef.set(userData, SetOptions.merge())
     }
 
-    /**
-     * Vérifie si un utilisateur existe dans Firestore
-     */
     fun checkIfUserExists(userId: String): Task<DocumentSnapshot> {
         return usersCollection.document(userId).get()
     }
 
-    /**
-     * Obtient l'utilisateur actuel de Firestore (version Kotlin coroutines)
-     */
+   
     suspend fun getCurrentUser(): User? = suspendCoroutine { continuation ->
         val currentUser = auth.currentUser
         if (currentUser == null) {

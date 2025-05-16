@@ -8,6 +8,10 @@ class MyApplication: Application() {
         super.onCreate()
         // Initialisation de Firebase
         FirebaseApp.initializeApp(this)
+
+        // Création des canaux de notification
+        AlarmReceiver.createNotificationChannel(this)
+        AppointmentAlarmReceiver.createNotificationChannel(this)
     }
 
 }

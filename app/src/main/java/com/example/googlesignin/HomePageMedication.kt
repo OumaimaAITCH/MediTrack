@@ -31,45 +31,6 @@ class HomePageMedication : AppCompatActivity() {
             startActivity(Intent(this, AddMedications::class.java))
         }
     }
-
-//    private fun setupMedicationsList() {
-//        val medAdapter = MedAdapter(mutableListOf()) { /* onDelete implementation */ }
-//        val rvMedicaments = findViewById<RecyclerView>(R.id.rvMedicaments)
-//        rvMedicaments.layoutManager = LinearLayoutManager(this)
-//        rvMedicaments.adapter = medAdapter
-//
-//        // Récupérer l'ID de l'utilisateur connecté
-//        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-//
-//        // Modifier la requête pour filtrer par userId
-//        db.collection("medications")
-//            .whereEqualTo("userId", currentUserId)  // Ajouter le filtre
-//            .addSnapshotListener { snapshot, e ->
-//                if (e != null) {
-//                    Toast.makeText(this, "Erreur: ${e.message}", Toast.LENGTH_SHORT).show()
-//                    return@addSnapshotListener
-//                }
-//
-//                if (snapshot != null) {
-//                    val medicamentsList = snapshot.documents.mapNotNull { doc ->
-//                        doc.data?.let { data ->
-//                            Medicament(
-//                                id = doc.id,
-//                                nom = data["name"] as? String ?: "",
-//                                type = data["type"] as? String ?: "",
-//                                dose = data["dose"] as? String ?: "",
-//                                quantity = data["quantity"] as? String ?: "",
-//                                rappel = data["reminder"] as? String ?: "",
-//                                alarmeActive = data["alarmEnabled"] as? Boolean ?: false,
-//                                isTaken = data["isTaken"] as? Boolean ?: false
-//                            )
-//                        }
-//                    }
-//                    medAdapter.updateMedications(medicamentsList)
-//                }
-//            }
-//    }
-
     private fun loadMedications() {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
         if (currentUserId == null) {
